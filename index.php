@@ -1,3 +1,7 @@
+<?php
+//include the database config
+include('include/config.inc.php');
+?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -14,6 +18,7 @@
     <body>
         <h1>MySQL Database Comparison</h2>
 
+        <h2>Comparing <?php echo $COMPARE_DB; ?> against <?php echo $TEMPLATE_DB; ?></h2>
         <?php
         /**
          * Database template comparison by Chris Tate-Davies <chris@tatedavies.com>
@@ -21,31 +26,29 @@
          * Update config.inc.php to have your database/user/password/names
          * This is for comparing a master (template) db against another
          * */
-// include the configuration
-        include('include/config.inc.php');
 
 //turn off error reporting
         error_reporting(0);
 
-        $template_db    = new PDO($MAIN_DB_TYPE . ':host=' . $MAIN_DB_HOST . ';dbname=' . $TEMPLATE_DB, $MAIN_DB_USER, $MAIN_DB_PASS);
-        $compare_db     = new PDO($MAIN_DB_TYPE . ':host=' . $MAIN_DB_HOST . ';dbname=' . $COMPARE_DB, $MAIN_DB_USER, $MAIN_DB_PASS);
+        $template_db = new PDO($MAIN_DB_TYPE . ':host=' . $MAIN_DB_HOST . ';dbname=' . $TEMPLATE_DB, $MAIN_DB_USER, $MAIN_DB_PASS);
+        $compare_db  = new PDO($MAIN_DB_TYPE . ':host=' . $MAIN_DB_HOST . ';dbname=' . $COMPARE_DB, $MAIN_DB_USER, $MAIN_DB_PASS);
 
 //this is where we will save the string to run the SQL
-        $result_sql     = "";
+        $result_sql = "";
 
 //show table syntax
-        $t_statement    = $template_db->prepare("SHOW TABLES");
-        $c_statement    = $compare_db->prepare("SHOW TABLES");
+        $t_statement = $template_db->prepare("SHOW TABLES");
+        $c_statement = $compare_db->prepare("SHOW TABLES");
 
 //get the tables from the relavent databases
         $t_statement->execute();
-        $t_tables       = $t_statement->fetchAll();
+        $t_tables = $t_statement->fetchAll();
 
         $c_statement->execute();
-        $c_tables       = $c_statement->fetchAll();
+        $c_tables = $c_statement->fetchAll();
 
-        $tables_added   = array();
-        $fields_added   = array();
+        $tables_added = array();
+        $fields_added = array();
 
 //loop through each table in the template
         foreach ($t_tables as $template_table) {
@@ -172,8 +175,6 @@
                 $result_sql .= substr($temp, 0, $bracket_pos + 1) . ";<br/>";
             }
         }
-
-        //output the final SQL...
         echo "<hr><div id=\"code-box\"><pre>$result_sql</pre></div>";
         ?>
     </body>
