@@ -140,6 +140,13 @@ include('include/config.inc.php');
                     //so if the field isn't there, or the other details are different?
                     if (!$field_exists_in_compare) {
 
+                        //if we have a default
+                        if (strlen(trim($template_field_default))) {
+                            
+                            $template_field_default     = " DEFAULT {$template_field_default}";
+                            
+                        }
+                        
                         //then we want to update it
                         $result_sql .= trim("ALTER TABLE {$comparison_name} ADD COLUMN {$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}") . ";<br/>";
 
