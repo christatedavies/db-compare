@@ -1,22 +1,26 @@
 <?php
 //include the database config
-include('include/config.inc.php');
+include("include/config.inc.php");
+include("include/classes.php");
+
+if (isset($_POST["master"])) {
+    $TEMPLATE_DB    = $_POST["master"];
+}
+
+if (isset($_POST["compare"])) {
+    $COMPARE_DB     = $_POST["compare"];
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <title>Database Comparison</title>
-        <style>
-            #code-box {
-                padding: 5px;
-                border: 1pt #999 solid;
-                background-color: #ccc;
-                font-family: monospace;
-            }
-        </style>
+        <link type="text/css" rel="stylesheet" href="dbcompare.css" media="screen" />
+        <script type="text/javascript" src="dbcompare.js"></script>
     </head>
     <body>
-        <h1>MySQL Database Comparison</h2>
+        <h1>MySQL Database Comparison</h1>
 
         <h2>Comparing <?php echo $COMPARE_DB; ?> against <?php echo $TEMPLATE_DB; ?></h2>
         <?php
@@ -26,6 +30,9 @@ include('include/config.inc.php');
          * Update config.inc.php to have your database/user/password/names
          * This is for comparing a master (template) db against another
          * */
+
+//iclude the schema class
+        $tools      = new classes();
 
 //turn off error reporting
         error_reporting(0);
@@ -49,6 +56,9 @@ include('include/config.inc.php');
 
         $tables_added = array();
         $fields_added = array();
+        
+//keep a record of the table and fields
+        $return_data  = array();
 
 //loop through each table in the template
         foreach ($t_tables as $template_table) {
@@ -124,7 +134,7 @@ include('include/config.inc.php');
                             break;
                         }
                     }
-                              
+
                     //is the type the same? (this incldes length)
                     if ($compare_field_type === $template_field_type) {
 
@@ -150,9 +160,12 @@ include('include/config.inc.php');
                         //then we want to update it
                         $result_sql .= trim("ALTER TABLE {$comparison_name} ADD COLUMN {$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}") . ";<br/>";
 
+                        $return_data[$comparison_name]["ADDITIONS"][]  = "{$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}";
+                        
                         //if the key is valid
                         if ($template_field_key !== "") {
                             $result_sql .= "ALTER TABLE {$comparison_name} ADD INDEX {$template_field_name};<br/>";
+                            $return_data[$comparison_name]["INDEXES"]   = $template_field_name;
                         }
                     }
                     
@@ -164,7 +177,7 @@ include('include/config.inc.php');
                         
                         //then we want to update it
                         $result_sql .= trim("ALTER TABLE {$comparison_name} CHANGE  {$template_field_name} {$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}") . ";<br/>";
-
+                        $return_data[$comparison_name]["CHANGES"][] = "{$template_field_name} {$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}";
                     }
                 }
 
@@ -180,9 +193,83 @@ include('include/config.inc.php');
                 //remove the last bit. we want the db engine to handle it
                 $bracket_pos = strlen($temp) - strlen(strrchr($temp, ")"));
                 $result_sql .= substr($temp, 0, $bracket_pos + 1) . ";<br/>";
+                $return_data["NEWTABLES"][]    = substr($temp, 0, $bracket_pos + 1);
             }
         }
-        echo "<hr><div id=\"code-box\"><pre>$result_sql</pre></div>";
+        
+        
+        echo "<hr><div id=\"code-box\"><pre>";
+        foreach ($return_data as $item => $changes) {
+            if ($item == "NEWTABLES") {
+                foreach ($items as $new_table) {
+                    echo $new_table."<br/>";
+                }
+            } else {
+                //this is a table update
+                $table_name         = $item;
+                $additions_string   = "";
+                $changes_string     = "";
+                $index_string       = "";
+                foreach ($changes as $type => $change) {
+                    
+                    if ($type == "ADDITIONS") {
+                        foreach ($change as $index => $change_str) {
+                            $additions_string   .= " \nADD COLUMN " . $change_str . ",";
+                        }
+                    } elseif ($type == "CHANGES") {
+                        foreach ($change as $index => $change_str) {
+                            $changes_string     .= " \nCHANGE " . $change_str . ",";
+                        }
+                    } elseif ($type == "INDEXES") {
+                        foreach ($change as $index => $change_str) {
+                            $index_string       .= " \nAND INDEX " . $change_str . ",";
+                        }
+                    }
+                    
+                }
+                //trim off the ends
+                $additions_string   = substr($additions_string, 0, strlen($additions_string) - 1);
+                $changes_string   = substr($changes_string, 0, strlen($changes_string) - 1);
+                $index_string   = substr($index_string, 0, strlen($index_string) - 1);
+                
+                echo "\nALTER TABLE {$table_name} ";
+                if (strlen($additions_string)) {
+                    echo $additions_string;
+                }
+                if (strlen($changes_string)) {
+                    if (strlen($additions_string)) {
+                        echo ",";
+                    }
+                    echo $changes_string;
+                }
+                if (strlen($index_string)) {
+                    if (strlen($additions_string) || strlen($change_string)) {
+                        echo ",";
+                    }
+                    echo $index_string;
+                }
+                echo ";<br/>";
+            }
+        }
+        echo "</pre></div>";
         ?>
+
+    <div id="database-config">
+        <form id="form-submit" action="index.php" method="post">
+            <div class="form-label">Master Database</div>
+            <div class="form-input"><input type="text" name="master" value="<?php echo $TEMPLATE_DB;?>" /></div>
+            <div class="form-label">Compare Database</div>
+            <div class="form-input"><input type="text" name="compare" value="<?php echo $COMPARE_DB;?>" /></div>
+            <div class="form-buttons">
+                <p>
+                    <a id="re-compare-button" class="button-link">Compare</a>
+                </p>
+            </div>
+        </form>
+    </div>
+
+    <div id="about-me">
+        <a href="http://www.tatedavies.com">Chris Tate-Davies - 03/Sep/2014</a>
+    </div>
     </body>
 </html>
