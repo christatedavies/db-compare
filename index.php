@@ -40,8 +40,6 @@ if (isset($_POST["compare"])) {
         $template_db = new PDO($MAIN_DB_TYPE . ':host=' . $MAIN_DB_HOST . ';dbname=' . $TEMPLATE_DB, $MAIN_DB_USER, $MAIN_DB_PASS);
         $compare_db  = new PDO($MAIN_DB_TYPE . ':host=' . $MAIN_DB_HOST . ';dbname=' . $COMPARE_DB, $MAIN_DB_USER, $MAIN_DB_PASS);
 
-//this is where we will save the string to run the SQL
-        $result_sql = "";
 
 //show table syntax
         $t_statement = $template_db->prepare("SHOW TABLES");
@@ -149,22 +147,22 @@ if (isset($_POST["compare"])) {
 
                     //so if the field isn't there, or the other details are different?
                     if (!$field_exists_in_compare) {
-
+    
                         //if we have a default
                         if (strlen(trim($template_field_default))) {
-                            
+                            if ($tools->eval_field_default_should_be_enclosed_in_quotes($template_field_type)) {
+                                $template_field_default = "\"{$template_field_default}\"";
+                            }
                             $template_field_default     = " DEFAULT {$template_field_default}";
                             
                         }
                         
                         //then we want to update it
-                        $result_sql .= trim("ALTER TABLE {$comparison_name} ADD COLUMN {$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}") . ";<br/>";
-
-                        $return_data[$comparison_name]["ADDITIONS"][]  = "{$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}";
+                        $return_data[$comparison_name]["ADDITIONS"][]  = trim("{$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}");
                         
                         //if the key is valid
                         if ($template_field_key !== "") {
-                            $result_sql .= "ALTER TABLE {$comparison_name} ADD INDEX {$template_field_name};<br/>";
+                            
                             $return_data[$comparison_name]["INDEXES"]   = $template_field_name;
                         }
                     }
@@ -176,8 +174,7 @@ if (isset($_POST["compare"])) {
                             $field_default_is_different)) {
                         
                         //then we want to update it
-                        $result_sql .= trim("ALTER TABLE {$comparison_name} CHANGE  {$template_field_name} {$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}") . ";<br/>";
-                        $return_data[$comparison_name]["CHANGES"][] = "{$template_field_name} {$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}";
+                        $return_data[$comparison_name]["CHANGES"][] = trim("{$template_field_name} {$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}");
                     }
                 }
 
@@ -192,7 +189,8 @@ if (isset($_POST["compare"])) {
 
                 //remove the last bit. we want the db engine to handle it
                 $bracket_pos = strlen($temp) - strlen(strrchr($temp, ")"));
-                $result_sql .= substr($temp, 0, $bracket_pos + 1) . ";<br/>";
+
+                //remember this new table
                 $return_data["NEWTABLES"][]    = substr($temp, 0, $bracket_pos + 1);
             }
         }

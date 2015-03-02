@@ -29,4 +29,20 @@ class classes {
     public function get_connection(){
         return $this->_connection;
     }
+    
+    public function eval_field_default_should_be_enclosed_in_quotes($field_type) {
+        
+        //which fields do we want to wrap with quotes?
+        $allowed_types  = array("char", "tinytext", "mediumtext", "longtext", "varchar", "text", "datetime", "date", "time");
+        
+        //remove anything up to a ( symbol
+        if (strpos($field_type, "(") !== FALSE) {
+            
+            //get upto that point
+            $field_type     = substr($field_type, 0, strpos($field_type, "("));
+        }
+        
+        // is it in the array?
+        return in_array(strtolower($field_type), $allowed_types);
+    }
 } 
