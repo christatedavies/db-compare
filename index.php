@@ -153,12 +153,12 @@ if (isset($_POST["compare"])) {
                             if ($tools->eval_field_default_should_be_enclosed_in_quotes($template_field_type)) {
                                 $template_field_default = "\"{$template_field_default}\"";
                             }
-                            $template_field_default     = " DEFAULT {$template_field_default}";
+                            $template_field_default_string     = " DEFAULT {$template_field_default}";
                             
                         }
                         
                         //then we want to update it
-                        $return_data[$comparison_name]["ADDITIONS"][]  = trim("{$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}");
+                        $return_data[$comparison_name]["ADDITIONS"][]  = trim("{$template_field_name} {$template_field_type} {$template_field_default_string} {$template_field_extras}");
                         
                         //if the key is valid
                         if ($template_field_key !== "") {
@@ -173,8 +173,18 @@ if (isset($_POST["compare"])) {
                             $field_type_is_different ||
                             $field_default_is_different)) {
                         
+                        $template_field_default_string         = "";
+
+                        if ($field_default_is_different) {
+                            if ($tools->eval_field_default_should_be_enclosed_in_quotes($template_field_type)) {
+                                $template_field_default = "\"{$template_field_default}\"";
+                            }
+                            $template_field_default_string     = " DEFAULT {$template_field_default}";
+                            
+                        }
+
                         //then we want to update it
-                        $return_data[$comparison_name]["CHANGES"][] = trim("{$template_field_name} {$template_field_name} {$template_field_type} {$template_field_default} {$template_field_extras}");
+                        $return_data[$comparison_name]["CHANGES"][] = trim("{$template_field_name} {$template_field_name} {$template_field_type} {$template_field_default_string} {$template_field_extras}");
                     }
                 }
 
