@@ -26,7 +26,7 @@ if (isset($_POST["compare"])) {
         <?php
         /**
          * Database template comparison by Chris Tate-Davies <chris@tatedavies.com>
-         * 
+         *
          * Update config.inc.php to have your database/user/password/names
          * This is for comparing a master (template) db against another
          * */
@@ -54,7 +54,7 @@ if (isset($_POST["compare"])) {
 
         $tables_added = array();
         $fields_added = array();
-        
+
 //keep a record of the table and fields
         $return_data  = array();
 
@@ -112,7 +112,7 @@ if (isset($_POST["compare"])) {
 
                     $added                      = FALSE;
                     $field_found                = FALSE;
-                    
+
                     //check that the field exists?
                     foreach ($cf_field_list as $compare_field) {
 
@@ -127,7 +127,7 @@ if (isset($_POST["compare"])) {
                             $field_exists_in_compare    = TRUE;
                             $field_found                = TRUE;
                         }
-                        
+
                         if ($field_found) {
                             break;
                         }
@@ -147,32 +147,32 @@ if (isset($_POST["compare"])) {
 
                     //so if the field isn't there, or the other details are different?
                     if (!$field_exists_in_compare) {
-    
+
                         //if we have a default
                         if (strlen(trim($template_field_default))) {
                             if ($tools->eval_field_default_should_be_enclosed_in_quotes($template_field_type)) {
                                 $template_field_default = "\"{$template_field_default}\"";
                             }
                             $template_field_default_string     = " DEFAULT {$template_field_default}";
-                            
+
                         }
-                        
+
                         //then we want to update it
                         $return_data[$comparison_name]["ADDITIONS"][]  = trim("{$template_field_name} {$template_field_type} {$template_field_default_string} {$template_field_extras}");
-                        
+
                         //if the key is valid
                         if ($template_field_key !== "") {
-                            
+
                             $return_data[$comparison_name]["INDEXES"]   = $template_field_name;
                         }
                     }
-                    
-                    
-                    
+
+
+
                     if ($field_exists_in_compare && (
                             $field_type_is_different ||
                             $field_default_is_different)) {
-                        
+
                         $template_field_default_string         = "";
 
                         if ($field_default_is_different) {
@@ -180,7 +180,7 @@ if (isset($_POST["compare"])) {
                                 $template_field_default = "\"{$template_field_default}\"";
                             }
                             $template_field_default_string     = " DEFAULT {$template_field_default}";
-                            
+
                         }
 
                         //then we want to update it
@@ -189,6 +189,7 @@ if (isset($_POST["compare"])) {
                 }
 
             }
+
             if (!$table_exists_in_compare) {
 
                 $tf_statement = $template_db->prepare("SHOW CREATE TABLE " . $template_name . ";");
@@ -204,12 +205,13 @@ if (isset($_POST["compare"])) {
                 $return_data["NEWTABLES"][]    = substr($temp, 0, $bracket_pos + 1);
             }
         }
-        
-        
+
+
         echo "<hr><div id=\"code-box\"><pre>";
         foreach ($return_data as $item => $changes) {
             if ($item == "NEWTABLES") {
-                foreach ($items as $new_table) {
+
+                foreach ($changes as $new_table) {
                     echo $new_table."<br/>";
                 }
             } else {
@@ -219,7 +221,7 @@ if (isset($_POST["compare"])) {
                 $changes_string     = "";
                 $index_string       = "";
                 foreach ($changes as $type => $change) {
-                    
+
                     if ($type == "ADDITIONS") {
                         foreach ($change as $index => $change_str) {
                             $additions_string   .= " \nADD COLUMN " . $change_str . ",";
@@ -233,13 +235,13 @@ if (isset($_POST["compare"])) {
                             $index_string       .= " \nAND INDEX " . $change_str . ",";
                         }
                     }
-                    
+
                 }
                 //trim off the ends
                 $additions_string   = substr($additions_string, 0, strlen($additions_string) - 1);
                 $changes_string   = substr($changes_string, 0, strlen($changes_string) - 1);
                 $index_string   = substr($index_string, 0, strlen($index_string) - 1);
-                
+
                 echo "\nALTER TABLE {$table_name} ";
                 if (strlen($additions_string)) {
                     echo $additions_string;
@@ -260,6 +262,8 @@ if (isset($_POST["compare"])) {
             }
         }
         echo "</pre></div>";
+
+
         ?>
 
     <div id="database-config">
