@@ -212,7 +212,7 @@ if (isset($_POST["compare"])) {
             if ($item == "NEWTABLES") {
 
                 foreach ($changes as $new_table) {
-                    echo $new_table."<br/>";
+                    echo $new_table.";<br/>";
                 }
             } else {
                 //this is a table update
